@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import time
 from utils import apply_cloak
+import sys
 
 cap = cv2.VideoCapture(0)
 
@@ -9,17 +10,22 @@ background = None
 selected_hsv = None
 cloak_started = False
 current_frame = None
+exit_program = False  # Flag to exit program
 
 VIDEO_W = 640
 VIDEO_H = 480
 PANEL_W = 260
 
+# Button coordinates (x1, y1, x2, y2)
 BTN_BG = (20, 50, 240, 100)
 BTN_START = (20, 120, 240, 170)
+BTN_EXIT = (20, 190, 240, 240)  # New Exit button
 
 
 def draw_button(panel, btn, text, active=False):
     color = (0, 200, 0) if active else (200, 200, 200)
+    if text == "Exit":
+        color = (0, 0, 255)  # Red color for exit button
     cv2.rectangle(panel, (btn[0], btn[1]), (btn[2], btn[3]), color, -1)
     cv2.rectangle(panel, (btn[0], btn[1]), (btn[2], btn[3]), (0, 0, 0), 2)
     cv2.putText(panel, text, (btn[0] + 10, btn[1] + 35),
@@ -27,7 +33,7 @@ def draw_button(panel, btn, text, active=False):
 
 
 def mouse_events(event, x, y, flags, param):
-    global background, selected_hsv, cloak_started, current_frame
+    global background, selected_hsv, cloak_started, current_frame, exit_program
 
     if event != cv2.EVENT_LBUTTONDOWN:
         return
@@ -52,6 +58,10 @@ def mouse_events(event, x, y, flags, param):
             else:
                 print("Capture background first!")
 
+        elif BTN_EXIT[0] < px < BTN_EXIT[2] and BTN_EXIT[1] < y < BTN_EXIT[3]:
+            print("Exiting program...")
+            exit_program = True
+
     # Click on video → pick cloak color
     else:
         if cloak_started and current_frame is not None:
@@ -69,7 +79,7 @@ def mouse_events(event, x, y, flags, param):
 cv2.namedWindow("Invisible Cloak")
 cv2.setMouseCallback("Invisible Cloak", mouse_events)
 
-while cap.isOpened():
+while cap.isOpened() and not exit_program:
     ret, frame = cap.read()
     if not ret:
         break
@@ -83,16 +93,17 @@ while cap.isOpened():
     else:
         video = frame.copy()
 
+    # UI panel
     panel = np.ones((VIDEO_H, PANEL_W, 3), dtype=np.uint8) * 240
-
     draw_button(panel, BTN_BG, "Capture BG", background is not None)
     draw_button(panel, BTN_START, "Start Cloak", cloak_started)
+    draw_button(panel, BTN_EXIT, "Exit")  # Draw exit button
 
-    cv2.putText(panel, "Status:", (20, 220),
+    cv2.putText(panel, "Status:", (20, 260),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
 
     status = "READY" if selected_hsv else "WAITING"
-    cv2.putText(panel, status, (20, 260),
+    cv2.putText(panel, status, (20, 300),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (50, 50, 200), 2)
 
     combined = np.hstack((video, panel))
@@ -103,3 +114,4 @@ while cap.isOpened():
 
 cap.release()
 cv2.destroyAllWindows()
+sys.exit()
