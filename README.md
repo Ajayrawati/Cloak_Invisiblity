@@ -19,11 +19,13 @@ This version includes a **clean UI panel on the right side** with buttons for be
 
 ## 📁 Project Structure
 Cloak_Invisibility/
+│──requirement.txt
 │── ui_entry_point.py # Main UI + camera handling
 │── utils.py # Cloak (image processing) logic
 │── README.md
 
 ▶️ How to Run
+-- pip install requirement.txt
 -- python ui_entry_point.py
 
 
